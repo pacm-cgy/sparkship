@@ -14,9 +14,16 @@ function RoleSelectPage() {
   async function saveRole() {
     if (!role || !user) return
     setLoading(true)
-    await supabase.from('sparkship_profiles').update({ role }).eq('id', user.id)
-    await fetchProfile(user.id)
-    navigate('/')
+    try {
+      await supabase.from('sparkship_profiles').update({ role }).eq('id', user.id)
+      // 즉시 이동 (fetchProfile은 background에서 처리)
+      navigate('/', { replace: true })
+      // 이후 profile 갱신
+      setTimeout(() => fetchProfile(user.id), 100)
+    } catch(e) {
+      console.error('역할 저장 오류:', e)
+      setLoading(false)
+    }
   }
 
   const ROLES = [
@@ -86,7 +93,8 @@ export default function AuthPage({ mode = 'login' }) {
   const [done, setDone] = useState(false)
 
   // 소셜 로그인 후 role 미설정 → 역할 선택 화면
-  if (user && profile?.role === 'pending') return <RoleSelectPage />
+  // 소셜 로그인 신규 가입자만 역할 선택 화면으로 (이미 역할 있으면 통과)
+  if (user && profile && profile.role === 'pending') return <RoleSelectPage />
   if (user) { navigate('/'); return null }
 
   const signInWithGoogle = async () => {
