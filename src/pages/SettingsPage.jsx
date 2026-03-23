@@ -1,8 +1,64 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { User, Shield, Bell, LogOut, ChevronRight } from 'lucide-react'
+import { User, Shield, Bell, LogOut, ChevronRight, AlertTriangle } from 'lucide-react'
 import { useAuthStore } from '../store'
 import { supabase } from '../lib/supabase'
+
+
+function AccountDeleteSection({ userId, onDeleted }) {
+  const [step, setStep] = useState('confirm') // confirm | deactivated
+  const [loading, setLoading] = useState(false)
+  const [reason, setReason] = useState('')
+
+  async function requestDelete() {
+    if (!confirm('정말 계정 삭제를 요청하시겠습니까? 30일 동안 비활성 상태가 되며, 30일 이내 복구할 수 있습니다.')) return
+    setLoading(true)
+    const { supabase: sb } = await import('../lib/supabase')
+    await sb.from('sparkship_profiles').update({
+      status: 'deactivated',
+      deactivated_at: new Date().toISOString(),
+      delete_requested_at: new Date().toISOString(),
+      delete_scheduled_at: new Date(Date.now() + 30*24*60*60*1000).toISOString(),
+    }).eq('id', userId)
+    setStep('deactivated')
+    setLoading(false)
+    setTimeout(onDeleted, 2000)
+  }
+
+  if (step === 'deactivated') return (
+    <div style={{ textAlign:'center', padding:'32px 0' }}>
+      <div style={{ fontSize:32, marginBottom:12 }}>✅</div>
+      <h3 style={{ fontWeight:700, marginBottom:8 }}>삭제 요청 완료</h3>
+      <p style={{ fontSize:13, color:'var(--text-3)' }}>30일 후 계정이 영구 삭제됩니다. 30일 이내 로그인하면 복구할 수 있습니다.</p>
+    </div>
+  )
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+      <h2 style={{ fontFamily:'var(--f-display)', fontSize:18, fontWeight:700, letterSpacing:'-.03em' }}>계정 삭제</h2>
+      <div style={{ background:'rgba(239,68,68,.08)', border:'1px solid rgba(239,68,68,.2)', borderRadius:'var(--r-lg)', padding:16 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10, color:'var(--red)', fontWeight:600 }}>
+          <AlertTriangle size={16}/> 주의사항
+        </div>
+        <ul style={{ fontSize:13, color:'var(--text-2)', paddingLeft:16, lineHeight:1.8 }}>
+          <li>삭제 요청 후 <strong>30일간 비활성 상태</strong>로 전환됩니다</li>
+          <li>비활성 상태에서는 탐색 결과에 표시되지 않습니다</li>
+          <li>30일 이내 로그인하면 <strong>언제든 복구 가능</strong>합니다</li>
+          <li>30일 경과 후 <strong>영구 삭제</strong>되며 복구 불가합니다</li>
+        </ul>
+      </div>
+      <div>
+        <label>삭제 이유 (선택)</label>
+        <textarea value={reason} onChange={e=>setReason(e.target.value)} placeholder="더 나은 서비스를 위해 이유를 알려주세요..." style={{ minHeight:80 }}/>
+      </div>
+      <button className="btn" disabled={loading}
+        onClick={requestDelete}
+        style={{ background:'var(--red)', color:'#fff', border:'none', alignSelf:'flex-start', display:'flex', alignItems:'center', gap:6 }}>
+        {loading ? '처리 중...' : <><AlertTriangle size={14}/> 계정 삭제 요청</>}
+      </button>
+    </div>
+  )
+}
 
 export default function SettingsPage() {
   const navigate = useNavigate()
@@ -33,6 +89,7 @@ export default function SettingsPage() {
     { key:'profile', label:'프로필', icon:User },
     { key:'account', label:'계정 보안', icon:Shield },
     { key:'notif',   label:'알림 설정', icon:Bell },
+    { key:'delete',  label:'계정 삭제', icon:LogOut },
   ]
 
   return (
@@ -97,6 +154,9 @@ export default function SettingsPage() {
                 <h2 style={{ fontFamily:'var(--f-display)',fontSize:18,fontWeight:700,letterSpacing:'-.03em' }}>알림 설정</h2>
                 <p style={{ fontSize:13,color:'var(--text-3)' }}>알림 설정 기능은 추후 지원 예정입니다.</p>
               </div>
+            )}
+            {tab==='delete' && (
+              <AccountDeleteSection userId={user?.id} onDeleted={() => { signOut(); navigate('/') }} />
             )}
           </div>
         </div>

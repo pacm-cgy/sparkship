@@ -33,7 +33,7 @@ async function ensureProfile(user) {
     display_name: meta.full_name || meta.name || meta.user_name || email.split('@')[0],
     bio: '',
     avatar_url: meta.avatar_url || meta.picture || '',
-    role: 'builder',
+    role: 'pending',  // 온보딩에서 선택
   }
 
   const { data: created } = await supabase
