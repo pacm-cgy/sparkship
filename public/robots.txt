@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Disallow: /settings
+Disallow: /new
+Disallow: /login
+Disallow: /signup
+
+Sitemap: https://www.sparkship.pacm.kr/sitemap.xml
+
+# 검색엔진 크롤링 최적화
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 2

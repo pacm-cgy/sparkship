@@ -1,16 +1,70 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sparkship — 청소년 창업가 포트폴리오</title>
-  <meta name="description" content="청소년 창업가의 프로젝트를 세상에 알리는 포트폴리오 플랫폼">
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-</head>
-<body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.jsx"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- ── 파비콘 -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png" />
+
+    <!-- ── 기본 SEO -->
+    <title>Sparkship — 청소년 창업가 포트폴리오 플랫폼</title>
+    <meta name="description" content="청소년 창업가의 프로젝트를 세상에 공개하세요. 스카우터와 멘토에게 발견되고, 실제 창업 기회를 만드세요. PACM이 운영하는 청소년 창업 포트폴리오 플랫폼입니다." />
+    <meta name="keywords" content="청소년 창업, 창업 포트폴리오, 스타트업, 청년 창업, 창업가, 스카우트, 멘토링, Sparkship, PACM" />
+    <meta name="author" content="PACM" />
+    <meta name="robots" content="index, follow" />
+    <meta name="language" content="Korean" />
+    <link rel="canonical" href="https://www.sparkship.pacm.kr/" />
+
+    <!-- ── Open Graph (SNS 공유) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Sparkship — 청소년 창업가 포트폴리오 플랫폼" />
+    <meta property="og:description" content="청소년 창업가의 프로젝트를 세상에 공개하세요. 스카우터에게 발견되고 실제 창업 기회를 만드세요." />
+    <meta property="og:url" content="https://www.sparkship.pacm.kr/" />
+    <meta property="og:site_name" content="Sparkship by PACM" />
+    <meta property="og:image" content="https://www.sparkship.pacm.kr/logo.png" />
+    <meta property="og:image:width" content="480" />
+    <meta property="og:image:height" content="120" />
+    <meta property="og:locale" content="ko_KR" />
+
+    <!-- ── Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Sparkship — 청소년 창업가 포트폴리오" />
+    <meta name="twitter:description" content="청소년 창업가의 프로젝트를 세상에 공개하고 스카우터에게 발견되세요." />
+    <meta name="twitter:image" content="https://www.sparkship.pacm.kr/logo.png" />
+
+    <!-- ── 구조화 데이터 (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Sparkship",
+      "alternateName": "스파크쉽",
+      "url": "https://www.sparkship.pacm.kr",
+      "description": "청소년 창업가 포트폴리오 플랫폼. 프로젝트를 공개하고 스카우터와 멘토에게 발견되세요.",
+      "publisher": {
+        "@type": "Organization",
+        "name": "PACM",
+        "url": "https://pacm.kr"
+      },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://www.sparkship.pacm.kr/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+
+    <!-- ── 폰트 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>

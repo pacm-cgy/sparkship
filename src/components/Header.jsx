@@ -46,8 +46,12 @@ export default function Header() {
     <>
       <nav className="sp-nav">
         {/* 로고 */}
-        <Link to="/" className="sp-logo" style={{ textDecoration:'none' }}>
-          <div className="sp-logo-mark">⚡</div>
+        <Link to="/" className="sp-logo" style={{ textDecoration:'none', display:'flex', alignItems:'center', gap:'8px' }}>
+          {/* Sparkship 로고 SVG */}
+          <svg width="28" height="28" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="24" cy="24" r="22" fill="#0A0A0A"/>
+            <path d="M28 6 L14 26 L22 26 L20 42 L34 22 L26 22 Z" fill="#F59E0B"/>
+          </svg>
           <div className="sp-logo-text">Spark<span>ship</span></div>
         </Link>
 
