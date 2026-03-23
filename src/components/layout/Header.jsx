@@ -1,12 +1,35 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Zap, Search, Plus, Bell, Menu, X, ChevronDown } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store'
 
 export default function Header() {
   const { user, profile, signOut } = useAuthStore()
   const [menuOpen, setMenuOpen] = useState(false)
   const [dropOpen, setDropOpen] = useState(false)
+  const [msgCount, setMsgCount] = useState(0)
+  const [notifCount, setNotifCount] = useState(0)
+
+  useEffect(() => {
+    if (!user) return
+    // 읽지 않은 메시지 실시간 구독
+    const loadCounts = async () => {
+      const { count: mc } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_read', false)
+        .neq('sender_id', user.id)
+      setMsgCount(mc || 0)
+    }
+    loadCounts()
+    const sub = supabase
+      .channel('header-msg-count')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, loadCounts)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, loadCounts)
+      .subscribe()
+    return () => sub.unsubscribe()
+  }, [user])
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
@@ -55,6 +78,18 @@ export default function Header() {
 
           {user ? (
             <>
+              {/* 메시지 알림 배지 */}
+              <button onClick={() => navigate('/messages')}
+                style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, borderRadius: 8, color: 'var(--text-3)', transition: 'all .1s' }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-3)'; e.currentTarget.style.color = 'var(--text-1)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-3)' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                {msgCount > 0 && (
+                  <span style={{ position: 'absolute', top: 4, right: 4, minWidth: 16, height: 16, borderRadius: 9999, background: 'var(--spark)', color: '#000', fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', border: '2px solid var(--bg-1)', fontFamily: 'var(--f-mono)' }}>
+                    {msgCount > 99 ? '99+' : msgCount}
+                  </span>
+                )}
+              </button>
               <button className="btn btn-spark btn-sm nav-desktop" onClick={() => navigate('/new')} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 <Plus size={14} /> 등록
               </button>
