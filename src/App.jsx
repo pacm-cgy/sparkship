@@ -1,3 +1,4 @@
+import MessagesPage from './pages/MessagesPage'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useEffect } from 'react'
@@ -32,7 +33,8 @@ function AppInner() {
           <Route path="/search"              element={<SearchPage />} />
           <Route path="/p/:id"               element={<ProjectPage />} />
           <Route path="/u/:username"         element={<ProfilePage />} />
-          <Route path="/contact/:username"   element={<ContactPage />} />
+          <Route path="/messages" element={<MessagesPage />} />
+            <Route path="/contact/:username"   element={<ContactPage />} />
           <Route path="/settings"            element={<SettingsPage />} />
           <Route path="/new"                 element={<NewProjectPage />} />
           <Route path="/login"               element={<AuthPage mode="login" />} />
