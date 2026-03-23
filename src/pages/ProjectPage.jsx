@@ -6,7 +6,69 @@ const STAGE_LABEL = { idea:'아이디어', prototype:'프로토타입', mvp:'MVP
 
 export default function ProjectPage() {
   const { id } = useParams()
+  const { user } = useAuthStore()
   const { data: project, isLoading } = useProject(id)
+  const [liked, setLiked] = useState(false)
+  const [bookmarked, setBookmarked] = useState(false)
+  const [likeCount, setLikeCount] = useState(0)
+  const [bookmarkCount, setBookmarkCount] = useState(0)
+  const [comment, setComment] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (!project) return
+    setLikeCount(project.like_count || 0)
+    setBookmarkCount(project.bookmark_count || 0)
+    if (!user) return
+    // 내 좋아요/북마크 상태 확인
+    Promise.all([
+      supabase.from('sparkship_likes').select('id').eq('project_id', id).eq('user_id', user.id).single(),
+      supabase.from('sparkship_bookmarks').select('id').eq('project_id', id).eq('user_id', user.id).single()
+    ]).then(([l, b]) => {
+      setLiked(!l.error)
+      setBookmarked(!b.error)
+    })
+  }, [project, user, id])
+
+  const toggleLike = async () => {
+    if (!user) return
+    if (liked) {
+      await supabase.from('sparkship_likes').delete().match({ project_id: id, user_id: user.id })
+      await supabase.from('sparkship_projects').update({ like_count: Math.max(likeCount - 1, 0) }).eq('id', id)
+      setLiked(false); setLikeCount(c => Math.max(c - 1, 0))
+    } else {
+      await supabase.from('sparkship_likes').insert({ project_id: id, user_id: user.id })
+      await supabase.from('sparkship_projects').update({ like_count: likeCount + 1 }).eq('id', id)
+      setLiked(true); setLikeCount(c => c + 1)
+    }
+  }
+
+  const toggleBookmark = async () => {
+    if (!user) return
+    if (bookmarked) {
+      await supabase.from('sparkship_bookmarks').delete().match({ project_id: id, user_id: user.id })
+      await supabase.from('sparkship_projects').update({ bookmark_count: Math.max(bookmarkCount - 1, 0) }).eq('id', id)
+      setBookmarked(false); setBookmarkCount(c => Math.max(c - 1, 0))
+    } else {
+      await supabase.from('sparkship_bookmarks').insert({ project_id: id, user_id: user.id })
+      await supabase.from('sparkship_projects').update({ bookmark_count: bookmarkCount + 1 }).eq('id', id)
+      setBookmarked(true); setBookmarkCount(c => c + 1)
+    }
+  }
+
+  const submitComment = async () => {
+    if (!user || !comment.trim()) return
+    setSubmitting(true)
+    const { data: myProfile } = await supabase.from('sparkship_profiles').select('role').eq('id', user.id).single()
+    await supabase.from('sparkship_comments').insert({
+      project_id: id, author_id: user.id,
+      content: comment.trim(),
+      is_mentor: myProfile?.role === 'mentor'
+    })
+    setComment('')
+    setSubmitting(false)
+    window.location.reload()
+  }
 
   if (isLoading) return (
     <div className="container" style={{ paddingTop: 60, paddingBottom: 80 }}>
@@ -83,6 +145,16 @@ export default function ProjectPage() {
               <MessageCircle size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />
               피드백 {project.comments?.length > 0 ? `(${project.comments.length})` : ''}
             </h2>
+            {user && (
+              <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+                <input value={comment} onChange={e => setComment(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && submitComment()}
+                  placeholder="피드백이나 응원 메시지를 남겨주세요" style={{ flex: 1 }} />
+                <button className="btn btn-spark btn-sm" onClick={submitComment} disabled={submitting || !comment.trim()}>
+                  <Send size={14} />
+                </button>
+              </div>
+            )}
             {project.comments?.length === 0 ? (
               <p style={{ fontSize: 14, color: 'var(--text-4)' }}>첫 번째 피드백을 남겨보세요</p>
             ) : (
@@ -123,19 +195,26 @@ export default function ProjectPage() {
 
           {/* 통계 */}
           <div className="card" style={{ padding: '16px 20px' }}>
-            {[
-              { icon: Eye, label: '조회', value: project.view_count || 0 },
-              { icon: Heart, label: '좋아요', value: project.like_count || 0 },
-              { icon: Bookmark, label: '북마크', value: project.bookmark_count || 0 },
-              { icon: MessageCircle, label: '댓글', value: project.comments?.length || 0 },
-            ].map(s => (
-              <div key={s.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--line-1)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-3)' }}>
-                  <s.icon size={14} /> {s.label}
-                </div>
-                <span style={{ fontSize: 14, fontWeight: 700, fontFamily: 'var(--f-mono)', color: 'var(--text-1)' }}>{s.value}</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--line-1)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-3)' }}><Eye size={14} /> 조회</div>
+                <span style={{ fontSize: 14, fontWeight: 700, fontFamily: 'var(--f-mono)' }}>{project.view_count || 0}</span>
               </div>
-            ))}
+              <div onClick={toggleLike} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--line-1)', cursor: user ? 'pointer' : 'default' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: liked ? 'var(--red)' : 'var(--text-3)' }}>
+                  <Heart size={14} fill={liked ? 'var(--red)' : 'none'} stroke={liked ? 'var(--red)' : 'currentColor'} /> 좋아요
+                </div>
+                <span style={{ fontSize: 14, fontWeight: 700, fontFamily: 'var(--f-mono)', color: liked ? 'var(--red)' : 'var(--text-1)' }}>{likeCount}</span>
+              </div>
+              <div onClick={toggleBookmark} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--line-1)', cursor: user ? 'pointer' : 'default' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: bookmarked ? 'var(--spark)' : 'var(--text-3)' }}>
+                  <Bookmark size={14} fill={bookmarked ? 'var(--spark)' : 'none'} stroke={bookmarked ? 'var(--spark)' : 'currentColor'} /> 북마크
+                </div>
+                <span style={{ fontSize: 14, fontWeight: 700, fontFamily: 'var(--f-mono)', color: bookmarked ? 'var(--spark)' : 'var(--text-1)' }}>{bookmarkCount}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-3)' }}><MessageCircle size={14} /> 댓글</div>
+                <span style={{ fontSize: 14, fontWeight: 700, fontFamily: 'var(--f-mono)' }}>{project.comments?.length || 0}</span>
+              </div>
           </div>
         </div>
       </div>
