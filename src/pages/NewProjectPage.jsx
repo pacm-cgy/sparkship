@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Zap, Plus, X } from 'lucide-react'
+import ImageUpload from '../components/ui/ImageUpload'
 import { useAuthStore } from '../store'
 import { useCreateProject } from '../hooks/useData'
 
@@ -17,6 +18,7 @@ export default function NewProjectPage() {
     category: 'web', stage: 'idea',
     demo_url: '', github_url: '',
     tech_stack: [], tags: [],
+    thumbnail_url: '',
     is_hiring: false
   })
   const [tagInput, setTagInput] = useState('')
