@@ -118,7 +118,7 @@ export default function AuthPage({ mode = 'login' }) {
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="8자 이상" minLength={8} required />
           </div>
           {error && <p style={{ fontSize: 13, color: 'var(--red)', padding: '10px 14px', background: 'rgba(239,68,68,.08)', borderRadius: 8 }}>{error}</p>}
-          <button type="submit" className="btn btn-spark" disabled={loading} style={{ height: 44, fontWeight: 700, justifyContent: 'center' }}>
+          <button type="submit" className="btn-spark" disabled={loading} style={{ height: 44, fontWeight: 700, justifyContent: 'center' }}>
             {loading ? '처리 중...' : isLogin ? '로그인' : '시작하기'}
           </button>
         </form>
