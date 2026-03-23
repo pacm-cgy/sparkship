@@ -1,105 +1,104 @@
 import { useState, useEffect } from 'react'
-import { useSearchParams, Link } from 'react-router-dom'
 import { Search, Zap } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import ProjectCard from '../components/ui/ProjectCard'
 
 export default function SearchPage() {
-  const [params, setParams] = useSearchParams()
-  const [q, setQ] = useState(params.get('q') || '')
+  const [q, setQ] = useState('')
+  const [results, setResults] = useState({ projects:[], builders:[] })
+  const [loading, setLoading] = useState(false)
+  const [tab, setTab] = useState('projects')
 
-  useEffect(() => { if (params.get('q')) setQ(params.get('q')) }, [])
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['search', q],
-    enabled: q.length > 1,
-    queryFn: async () => {
-      const [projRes, builderRes] = await Promise.all([
-        supabase.from('sparkship_projects')
-          .select('*, owner:sparkship_profiles(id,username,display_name,avatar_url,school,grade)')
-          .eq('status', 'published')
-          .or(`title.ilike.%${q}%,tagline.ilike.%${q}%,description.ilike.%${q}%`)
-          .limit(12),
-        supabase.from('sparkship_profiles')
-          .select('*').eq('is_public', true)
-          .or(`display_name.ilike.%${q}%,bio.ilike.%${q}%,username.ilike.%${q}%`)
-          .limit(6)
+  useEffect(() => {
+    if (!q.trim()) { setResults({projects:[],builders:[]}); return }
+    const timer = setTimeout(async () => {
+      setLoading(true)
+      const [{ data:proj }, { data:bld }] = await Promise.all([
+        supabase.from('projects').select('*,owner:sparkship_profiles(display_name,avatar_url,username)')
+          .or(`title.ilike.%${q}%,tagline.ilike.%${q}%`).limit(12),
+        supabase.from('sparkship_profiles').select('*')
+          .or(`display_name.ilike.%${q}%,username.ilike.%${q}%,bio.ilike.%${q}%`).limit(8),
       ])
-      return { projects: projRes.data || [], builders: builderRes.data || [] }
-    }
-  })
+      setResults({ projects:proj||[], builders:bld||[] })
+      setLoading(false)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [q])
 
-  const handleSearch = e => {
-    e.preventDefault()
-    setParams({ q })
-  }
+  const total = results.projects.length + results.builders.length
 
   return (
-    <div className="container" style={{ paddingTop: 40, paddingBottom: 80 }}>
-      <div style={{ maxWidth: 600, margin: '0 auto', textAlign: 'center', marginBottom: 40 }}>
-        <Zap size={32} color="var(--spark)" style={{ marginBottom: 16 }} />
-        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 20 }}>검색</h1>
-        <form onSubmit={handleSearch} style={{ position: 'relative' }}>
-          <Search size={18} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-4)' }} />
-          <input value={q} onChange={e => setQ(e.target.value)} onBlur={handleSearch}
-            placeholder="프로젝트, 빌더, 기술스택으로 검색..."
-            style={{ paddingLeft: 48, height: 52, fontSize: 16, borderRadius: 12 }} autoFocus />
-        </form>
+    <div className="sp-page">
+      <div className="page-header">
+        <div className="page-header-inner">
+          <div className="sp-section-eyebrow">SEARCH</div>
+          <h1 style={{ fontFamily:'var(--f-display)',fontSize:'clamp(24px,3vw,32px)',fontWeight:800,letterSpacing:'-.04em',marginBottom:20 }}>전체 검색</h1>
+          <div style={{ position:'relative',maxWidth:560 }}>
+            <Search size={16} style={{ position:'absolute',left:14,top:'50%',transform:'translateY(-50%)',color:'var(--text-3)',pointerEvents:'none' }}/>
+            <input autoFocus value={q} onChange={e=>setQ(e.target.value)}
+              placeholder="프로젝트, 빌더, 태그로 검색..."
+              style={{ paddingLeft:44,fontSize:15,height:48 }}/>
+          </div>
+        </div>
       </div>
 
-      {q.length > 1 && (
-        <>
-          {isLoading ? (
-            <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-3)' }}>검색 중...</div>
-          ) : (
-            <>
-              {/* 빌더 결과 */}
-              {data?.builders?.length > 0 && (
-                <div style={{ marginBottom: 40 }}>
-                  <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--text-2)' }}>
-                    빌더 <span style={{ color: 'var(--spark)', fontFamily: 'var(--f-mono)' }}>{data.builders.length}</span>
-                  </h2>
-                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                    {data.builders.map(b => (
-                      <Link key={b.id} to={`/u/${b.username}`}>
-                        <div className="card" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-                          <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--spark-dim)', border: '1px solid var(--spark)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, color: 'var(--spark)' }}>
-                            {(b.display_name||'U')[0].toUpperCase()}
-                          </div>
-                          <div>
-                            <div style={{ fontWeight: 600, fontSize: 14 }}>{b.display_name}</div>
-                            <div style={{ fontSize: 11, color: 'var(--text-4)', fontFamily: 'var(--f-mono)' }}>@{b.username}</div>
-                          </div>
+      <div className="container" style={{ paddingTop:32,paddingBottom:80 }}>
+        {q.trim() && (
+          <>
+            <div style={{ display:'flex',gap:4,marginBottom:24,borderBottom:'1px solid var(--line-1)',paddingBottom:0 }}>
+              {[{key:'projects',label:`프로젝트 (${results.projects.length})`},{key:'builders',label:`빌더 (${results.builders.length})`}].map(t=>(
+                <button key={t.key} onClick={()=>setTab(t.key)}
+                  style={{ padding:'8px 16px',background:'none',border:'none',cursor:'pointer',fontSize:14,fontWeight:tab===t.key?600:400,
+                    color:tab===t.key?'var(--text-1)':'var(--text-3)',
+                    borderBottom:tab===t.key?'2px solid var(--spark)':'2px solid transparent',
+                    marginBottom:-1,transition:'var(--t-fast)' }}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {loading ? (
+              <div style={{ textAlign:'center',padding:'60px 0',color:'var(--text-3)',fontSize:14 }}>검색 중...</div>
+            ) : total===0 ? (
+              <div className="sp-empty" style={{ paddingTop:60 }}>
+                <Search size={36} style={{ opacity:.2,marginBottom:8 }}/>
+                <p className="sp-empty-title">결과가 없습니다</p>
+                <p className="sp-empty-desc">"{q}"에 대한 검색 결과가 없습니다</p>
+              </div>
+            ) : tab==='projects' ? (
+              results.projects.length>0 ? (
+                <div className="sp-grid-3">{results.projects.map(p=><ProjectCard key={p.id} project={p}/>)}</div>
+              ) : <p style={{ color:'var(--text-3)',fontSize:14 }}>프로젝트 결과 없음</p>
+            ) : (
+              results.builders.length>0 ? (
+                <div className="sp-grid-4">
+                  {results.builders.map(b=>(
+                    <Link key={b.id} to={`/u/${b.username}`} style={{ textDecoration:'none' }}>
+                      <div className="sp-builder-card">
+                        <div className="sp-avatar sp-avatar-lg">
+                          {b.avatar_url?<img src={b.avatar_url} alt={b.display_name}/>:(b.display_name?.[0]||'U').toUpperCase()}
                         </div>
-                      </Link>
-                    ))}
-                  </div>
+                        <div style={{ fontFamily:'var(--f-display)',fontSize:14,fontWeight:700 }}>{b.display_name||b.username}</div>
+                        <div style={{ fontSize:12,color:'var(--text-4)' }}>@{b.username}</div>
+                        {b.bio&&<p style={{ fontSize:12,color:'var(--text-3)',textAlign:'center',display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden' }}>{b.bio}</p>}
+                      </div>
+                    </Link>
+                  ))}
                 </div>
-              )}
+              ) : <p style={{ color:'var(--text-3)',fontSize:14 }}>빌더 결과 없음</p>
+            )}
+          </>
+        )}
 
-              {/* 프로젝트 결과 */}
-              {data?.projects?.length > 0 && (
-                <div>
-                  <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--text-2)' }}>
-                    프로젝트 <span style={{ color: 'var(--spark)', fontFamily: 'var(--f-mono)' }}>{data.projects.length}</span>
-                  </h2>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px,1fr))', gap: 16 }}>
-                    {data.projects.map(p => <ProjectCard key={p.id} project={p} />)}
-                  </div>
-                </div>
-              )}
-
-              {data?.projects?.length === 0 && data?.builders?.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '60px 0' }}>
-                  <p style={{ color: 'var(--text-3)', fontSize: 16, marginBottom: 6 }}>"{q}"에 대한 결과가 없습니다</p>
-                  <p style={{ color: 'var(--text-4)', fontSize: 13 }}>다른 검색어를 입력해보세요</p>
-                </div>
-              )}
-            </>
-          )}
-        </>
-      )}
+        {!q.trim() && (
+          <div className="sp-empty" style={{ paddingTop:80 }}>
+            <Search size={40} style={{ opacity:.2,marginBottom:8 }}/>
+            <p className="sp-empty-title">무엇을 찾고 있나요?</p>
+            <p className="sp-empty-desc">프로젝트 이름, 빌더 이름, 기술 태그 등을 검색해보세요</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -1,93 +1,104 @@
 import { useNavigate } from 'react-router-dom'
-import { Zap, Search, Users, TrendingUp, Award } from 'lucide-react'
+import { Star, Search, MessageSquare, Zap, CheckCircle } from 'lucide-react'
 
 const FEATURES = [
-  { icon: Search, title: '정밀 탐색', desc: '스킬, 학교, 지역, 프로젝트 단계별로 원하는 빌더를 찾으세요', color: 'var(--spark)' },
-  { icon: Users, title: '직접 연락', desc: '마음에 드는 빌더에게 스카우트·협업·멘토링 제안을 직접 보내세요', color: 'var(--blue)' },
-  { icon: TrendingUp, title: '성장 추적', desc: '빌더의 프로젝트 이력과 성장 과정을 한눈에 파악하세요', color: 'var(--green)' },
-  { icon: Award, title: '인재 검증', desc: '실제 프로젝트로 검증된 청소년 인재를 만나보세요', color: 'var(--purple)' },
+  { icon:'🔍', title:'프로젝트 탐색', desc:'AI·웹·앱 등 카테고리별로 청소년 창업가의 프로젝트를 한눈에 확인' },
+  { icon:'📩', title:'직접 연락', desc:'마음에 드는 빌더에게 스카우트 문의를 바로 전송' },
+  { icon:'📊', title:'포트폴리오 분석', desc:'프로젝트 진행 단계, 기술 스택, 성과 지표를 상세히 확인' },
+  { icon:'🤝', title:'멘토링 연결', desc:'투자·멘토링·협업 등 다양한 방식으로 청소년 창업가를 지원' },
 ]
-
-const SCOUT_TYPES = [
-  { label: '인턴십 제안', emoji: '💼', desc: '방학 인턴, 파트타임 협업' },
-  { label: '창업팀 모집', emoji: '🚀', desc: '공동창업자, 팀원 합류' },
-  { label: '프로젝트 의뢰', emoji: '⚡', desc: '실제 비즈니스 문제 해결' },
-  { label: '멘토링', emoji: '💡', desc: '성장 조언과 네트워크 연결' },
+const PLANS = [
+  { name:'Free', price:0, features:['프로필 열람 무제한','월 5회 연락','기본 검색 필터'], cta:'무료로 시작', featured:false },
+  { name:'Scout Pro', price:29000, period:'월', features:['연락 무제한','고급 필터 (기술스택·단계·연령)','읽음 확인','우선 노출'], cta:'Pro 시작하기', featured:true },
+  { name:'Enterprise', price:null, features:['팀 계정 (최대 10명)','전담 매니저','커스텀 계약','API 연동'], cta:'문의하기', featured:false },
 ]
 
 export default function ScoutPage() {
   const navigate = useNavigate()
 
   return (
-    <div style={{ paddingBottom: 80 }}>
+    <div className="sp-page">
       {/* 히어로 */}
-      <section style={{ padding: '64px 0', borderBottom: '1px solid var(--line-1)', background: 'linear-gradient(180deg, var(--bg-2) 0%, var(--bg-0) 100%)' }}>
-        <div className="container" style={{ textAlign: 'center' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 100, border: '1px solid rgba(245,158,11,.3)', background: 'var(--spark-dim)', marginBottom: 20 }}>
-            <Zap size={12} color="var(--spark)" fill="var(--spark)" />
-            <span style={{ fontSize: 12, color: 'var(--spark)', fontFamily: 'var(--f-mono)', letterSpacing: '0.05em' }}>FOR SCOUTS & MENTORS</span>
-          </div>
-          <h1 style={{ fontSize: 'clamp(28px,5vw,48px)', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.04em', marginBottom: 16 }}>
-            다음 세대의<br /><span style={{ color: 'var(--spark)' }}>불꽃을 발견하세요</span>
+      <section style={{ borderBottom:'1px solid var(--line-1)',padding:'72px 0',textAlign:'center',position:'relative',overflow:'hidden' }}>
+        <div style={{ position:'absolute',inset:0,background:'radial-gradient(ellipse 800px 500px at 50% 0%,rgba(245,158,11,.06) 0%,transparent 65%)',pointerEvents:'none' }}/>
+        <div className="container" style={{ position:'relative' }}>
+          <div className="sp-section-eyebrow" style={{ marginBottom:16 }}>FOR SCOUTS</div>
+          <h1 style={{ fontFamily:'var(--f-display)',fontSize:'clamp(32px,5vw,56px)',fontWeight:800,letterSpacing:'-.05em',lineHeight:1.05,marginBottom:20 }}>
+            차세대 창업가를<br/><span style={{ color:'var(--spark)' }}>직접 발굴하세요</span>
           </h1>
-          <p style={{ fontSize: 15, color: 'var(--text-3)', maxWidth: 480, margin: '0 auto 32px', lineHeight: 1.7 }}>
-            아이디어 단계부터 실제 서비스까지 만들어낸 청소년 빌더들이 Sparkship에 있습니다. 지금 탐색하고 직접 연락하세요.
+          <p style={{ fontSize:'clamp(15px,2vw,17px)',color:'var(--text-3)',maxWidth:520,margin:'0 auto 36px',lineHeight:1.7 }}>
+            Sparkship에서 청소년 창업가의 포트폴리오를 탐색하고, 투자·멘토링·협업 기회를 만드세요.
           </p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="btn btn-spark btn-lg" onClick={() => navigate('/builders')}>
-              <Search size={16} /> 빌더 탐색하기
-            </button>
-            <button className="btn btn-outline btn-lg" onClick={() => navigate('/signup')}>
-              스카우터로 가입
-            </button>
+          <div style={{ display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap' }}>
+            <button className="btn btn-spark btn-lg" onClick={()=>navigate('/builders')}><Star size={15}/> 빌더 탐색하기</button>
+            <button className="btn btn-outline btn-lg" onClick={()=>navigate('/signup')}>스카우터 등록</button>
           </div>
         </div>
       </section>
 
-      {/* 연락 유형 */}
-      <section className="section">
+      {/* 기능 그리드 */}
+      <section className="sp-section">
         <div className="container">
-          <div style={{ textAlign: 'center', marginBottom: 40 }}>
-            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--spark)', letterSpacing: '0.15em', marginBottom: 8 }}>HOW IT WORKS</div>
-            <h2 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.03em' }}>어떤 형태로든 연결하세요</h2>
+          <div style={{ textAlign:'center',marginBottom:40 }}>
+            <div className="sp-section-eyebrow">FEATURES</div>
+            <h2 className="sp-section-title">스카우터를 위한 기능</h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px,1fr))', gap: 12 }}>
-            {SCOUT_TYPES.map(t => (
-              <div key={t.label} className="card" style={{ padding: '24px 20px', textAlign: 'center' }}>
-                <div style={{ fontSize: 32, marginBottom: 12 }}>{t.emoji}</div>
-                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>{t.label}</div>
-                <div style={{ fontSize: 13, color: 'var(--text-3)' }}>{t.desc}</div>
+          <div className="sp-grid-4">
+            {FEATURES.map((f,i)=>(
+              <div key={i} style={{ background:'var(--bg-card)',border:'1px solid var(--line-1)',borderRadius:'var(--r-xl)',padding:24,transition:'var(--t-mid)' }}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--spark-border)';e.currentTarget.style.transform='translateY(-2px)'}}
+                onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--line-1)';e.currentTarget.style.transform='none'}}>
+                <div style={{ fontSize:28,marginBottom:14 }}>{f.icon}</div>
+                <div style={{ fontFamily:'var(--f-display)',fontSize:15,fontWeight:700,marginBottom:8,letterSpacing:'-.02em' }}>{f.title}</div>
+                <p style={{ fontSize:13,color:'var(--text-3)',lineHeight:1.6 }}>{f.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* 기능 */}
-      <section style={{ padding: '64px 0', borderTop: '1px solid var(--line-1)', background: 'var(--bg-1)' }}>
+      {/* 요금제 */}
+      <section style={{ borderTop:'1px solid var(--line-1)',background:'var(--bg-1)',padding:'64px 0' }}>
         <div className="container">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px,1fr))', gap: 16 }}>
-            {FEATURES.map(f => (
-              <div key={f.title} className="card" style={{ padding: '24px 20px' }}>
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: `${f.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
-                  <f.icon size={20} color={f.color} />
+          <div style={{ textAlign:'center',marginBottom:40 }}>
+            <div className="sp-section-eyebrow">PRICING</div>
+            <h2 className="sp-section-title">합리적인 요금제</h2>
+            <p className="sp-section-subtitle">청소년 빌더 발굴에 필요한 모든 것</p>
+          </div>
+          <div className="sp-grid-3" style={{ maxWidth:900,margin:'0 auto' }}>
+            {PLANS.map((p,i)=>(
+              <div key={i} className={`pricing-card${p.featured?' featured':''}`}
+                style={{ position:'relative',boxShadow:p.featured?'var(--shadow-spark)':'none' }}>
+                {p.featured&&<span className="badge badge-spark" style={{ position:'absolute',top:-12,left:'50%',transform:'translateX(-50%)' }}>추천</span>}
+                <div>
+                  <div style={{ fontSize:13,fontWeight:600,color:'var(--text-3)',marginBottom:8 }}>{p.name}</div>
+                  {p.price!==null ? (
+                    <div>
+                      <span style={{ fontFamily:'var(--f-display)',fontSize:32,fontWeight:800,letterSpacing:'-.04em' }}>
+                        {p.price===0?'무료':p.price.toLocaleString()+'원'}
+                      </span>
+                      {p.period&&<span style={{ fontSize:13,color:'var(--text-3)',marginLeft:4 }}>/{p.period}</span>}
+                    </div>
+                  ) : (
+                    <div style={{ fontFamily:'var(--f-display)',fontSize:24,fontWeight:800 }}>문의</div>
+                  )}
                 </div>
-                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 8 }}>{f.title}</div>
-                <div style={{ fontSize: 13, color: 'var(--text-3)', lineHeight: 1.7 }}>{f.desc}</div>
+                <div style={{ display:'flex',flexDirection:'column',gap:8,flex:1 }}>
+                  {p.features.map((f,j)=>(
+                    <div key={j} style={{ display:'flex',alignItems:'center',gap:8,fontSize:13,color:'var(--text-2)' }}>
+                      <CheckCircle size={14} color="var(--green)" style={{ flexShrink:0 }}/>{f}
+                    </div>
+                  ))}
+                </div>
+                <button
+                  className={`btn ${p.featured?'btn-spark':'btn-outline'}`}
+                  style={{ width:'100%',justifyContent:'center',marginTop:4 }}
+                  onClick={()=>navigate(p.price===null?'/contact/support':'/signup')}>
+                  {p.cta}
+                </button>
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section style={{ padding: '64px 0', borderTop: '1px solid var(--line-1)' }}>
-        <div className="container" style={{ textAlign: 'center' }}>
-          <h2 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 12 }}>지금 시작하세요</h2>
-          <p style={{ color: 'var(--text-3)', marginBottom: 28, fontSize: 14 }}>가입 후 즉시 빌더 탐색 및 연락이 가능합니다</p>
-          <button className="btn btn-spark btn-lg" onClick={() => navigate('/signup')}>
-            스카우터로 무료 가입 <Zap size={16} fill="currentColor" />
-          </button>
         </div>
       </section>
     </div>

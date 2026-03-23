@@ -1,126 +1,106 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Save, LogOut } from 'lucide-react'
+import { User, Shield, Bell, LogOut, ChevronRight } from 'lucide-react'
 import { useAuthStore } from '../store'
 import { supabase } from '../lib/supabase'
 
-const SKILL_SUGGESTIONS = ['React', 'Python', 'JavaScript', 'TypeScript', 'Swift', 'Flutter', 'AI/ML', 'No-Code', 'Design', 'Marketing', 'Business', 'Finance']
-
 export default function SettingsPage() {
-  const { user, profile, fetchProfile, signOut } = useAuthStore()
   const navigate = useNavigate()
-  const [form, setForm] = useState({ display_name:'', bio:'', school:'', grade:'', location:'', website_url:'', github_url:'', company_name:'', industry:'', skills:[] })
-  const [saved, setSaved] = useState(false)
+  const { user, profile, signOut, fetchProfile } = useAuthStore()
+  const [tab, setTab] = useState('profile')
+  const [form, setForm] = useState({ display_name:profile?.display_name||'', bio:profile?.bio||'', github_url:profile?.github_url||'', website_url:profile?.website_url||'' })
   const [loading, setLoading] = useState(false)
+  const [saved, setSaved] = useState(false)
 
-  useEffect(() => {
-    if (profile) setForm(f => ({ ...f, ...profile }))
-  }, [profile])
+  if (!user) return (
+    <div className="sp-empty" style={{ paddingTop:120 }}>
+      <p className="sp-empty-title">로그인이 필요합니다</p>
+      <button className="btn btn-spark" onClick={()=>navigate('/login')} style={{ marginTop:16 }}>로그인</button>
+    </div>
+  )
 
-  if (!user) { navigate('/login'); return null }
-
-  const toggleSkill = s => setForm(f => ({
-    ...f, skills: f.skills?.includes(s) ? f.skills.filter(x => x !== s) : [...(f.skills||[]), s]
-  }))
-
-  const handleSave = async e => {
+  async function saveProfile(e) {
     e.preventDefault()
     setLoading(true)
-    const { error } = await supabase.from('sparkship_profiles').update({
-      display_name: form.display_name,
-      bio: form.bio,
-      school: form.school,
-      grade: form.grade,
-      location: form.location,
-      website_url: form.website_url,
-      github_url: form.github_url,
-      company_name: form.company_name,
-      industry: form.industry,
-      skills: form.skills,
-      updated_at: new Date().toISOString()
-    }).eq('id', user.id)
-    if (!error) { await fetchProfile(user.id); setSaved(true); setTimeout(() => setSaved(false), 2000) }
+    await supabase.from('sparkship_profiles').update(form).eq('id', user.id)
+    await fetchProfile(user.id)
+    setSaved(true)
+    setTimeout(()=>setSaved(false), 2000)
     setLoading(false)
   }
 
-  const isBuilder = profile?.role === 'builder'
+  const TABS = [
+    { key:'profile', label:'프로필', icon:User },
+    { key:'account', label:'계정 보안', icon:Shield },
+    { key:'notif',   label:'알림 설정', icon:Bell },
+  ]
 
   return (
-    <div className="container" style={{ paddingTop: 40, paddingBottom: 80, maxWidth: 600 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800 }}>프로필 설정</h1>
-        <button className="btn btn-ghost btn-sm" onClick={() => { signOut(); navigate('/') }}>
-          <LogOut size={14} /> 로그아웃
-        </button>
-      </div>
-
-      <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-        <div>
-          <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', marginBottom: 8, display: 'block' }}>이름 *</label>
-          <input value={form.display_name||''} onChange={e => setForm(f => ({...f, display_name: e.target.value}))} placeholder="이름" required />
-        </div>
-        <div>
-          <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', marginBottom: 8, display: 'block' }}>자기소개</label>
-          <textarea value={form.bio||''} onChange={e => setForm(f => ({...f, bio: e.target.value}))} placeholder="나를 한 문단으로 소개해주세요" style={{ minHeight: 90 }} />
-        </div>
-
-        {isBuilder && (
-          <>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              <div>
-                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', marginBottom: 8, display: 'block' }}>학교</label>
-                <input value={form.school||''} onChange={e => setForm(f => ({...f, school: e.target.value}))} placeholder="○○고등학교" />
-              </div>
-              <div>
-                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', marginBottom: 8, display: 'block' }}>학년</label>
-                <input value={form.grade||''} onChange={e => setForm(f => ({...f, grade: e.target.value}))} placeholder="2학년" />
-              </div>
+    <div className="sp-page" style={{ paddingTop:40,paddingBottom:80 }}>
+      <div className="container">
+        <h1 style={{ fontFamily:'var(--f-display)',fontSize:24,fontWeight:800,letterSpacing:'-.04em',marginBottom:32 }}>설정</h1>
+        <div style={{ display:'flex',gap:24,flexWrap:'wrap',alignItems:'flex-start' }}>
+          {/* 사이드바 */}
+          <div style={{ width:200,flexShrink:0,display:'flex',flexDirection:'column',gap:2 }}>
+            {TABS.map(t=>{
+              const Icon=t.icon
+              return (
+                <button key={t.key} onClick={()=>setTab(t.key)}
+                  style={{ display:'flex',alignItems:'center',gap:10,padding:'9px 12px',borderRadius:'var(--r-md)',background:tab===t.key?'var(--bg-hover)':'none',border:'none',cursor:'pointer',textAlign:'left',fontSize:14,color:tab===t.key?'var(--text-1)':'var(--text-3)',fontWeight:tab===t.key?600:400,transition:'var(--t-fast)' }}>
+                  <Icon size={15}/>{t.label}
+                </button>
+              )
+            })}
+            <div style={{ marginTop:8,borderTop:'1px solid var(--line-1)',paddingTop:8 }}>
+              <button onClick={()=>{signOut();navigate('/')}}
+                style={{ display:'flex',alignItems:'center',gap:10,padding:'9px 12px',borderRadius:'var(--r-md)',background:'none',border:'none',cursor:'pointer',textAlign:'left',fontSize:14,color:'var(--red)',width:'100%',transition:'var(--t-fast)' }}>
+                <LogOut size={15}/> 로그아웃
+              </button>
             </div>
-            <div>
-              <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', marginBottom: 10, display: 'block' }}>보유 스킬</label>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {SKILL_SUGGESTIONS.map(s => (
-                  <button key={s} type="button" className={`tag ${form.skills?.includes(s) ? 'active' : ''}`}
-                    onClick={() => toggleSkill(s)}>{s}</button>
+          </div>
+
+          {/* 콘텐츠 */}
+          <div style={{ flex:1,minWidth:300,background:'var(--bg-card)',border:'1px solid var(--line-1)',borderRadius:'var(--r-xl)',padding:28 }}>
+            {tab==='profile' && (
+              <form onSubmit={saveProfile} style={{ display:'flex',flexDirection:'column',gap:18 }}>
+                <h2 style={{ fontFamily:'var(--f-display)',fontSize:18,fontWeight:700,letterSpacing:'-.03em' }}>프로필 편집</h2>
+                {[
+                  { name:'display_name', label:'이름', placeholder:'홍길동' },
+                  { name:'bio', label:'소개', placeholder:'한 줄 소개', type:'textarea' },
+                  { name:'github_url', label:'GitHub URL', placeholder:'https://github.com/username' },
+                  { name:'website_url', label:'웹사이트', placeholder:'https://mysite.com' },
+                ].map(f=>(
+                  <div key={f.name}>
+                    <label>{f.label}</label>
+                    {f.type==='textarea'
+                      ? <textarea value={form[f.name]} onChange={e=>setForm({...form,[f.name]:e.target.value})} placeholder={f.placeholder} style={{ minHeight:80 }}/>
+                      : <input value={form[f.name]} onChange={e=>setForm({...form,[f.name]:e.target.value})} placeholder={f.placeholder}/>}
+                  </div>
                 ))}
+                <button type="submit" className="btn btn-spark" disabled={loading} style={{ alignSelf:'flex-start',minWidth:100,justifyContent:'center' }}>
+                  {loading?'저장 중...':saved?'✓ 저장됨':'저장'}
+                </button>
+              </form>
+            )}
+            {tab==='account' && (
+              <div style={{ display:'flex',flexDirection:'column',gap:16 }}>
+                <h2 style={{ fontFamily:'var(--f-display)',fontSize:18,fontWeight:700,letterSpacing:'-.03em' }}>계정 보안</h2>
+                <div style={{ padding:16,background:'var(--bg-2)',borderRadius:'var(--r-lg)',border:'1px solid var(--line-1)' }}>
+                  <div style={{ fontSize:13,color:'var(--text-3)',marginBottom:4 }}>이메일</div>
+                  <div style={{ fontSize:14,fontWeight:500 }}>{user.email}</div>
+                </div>
+                <p style={{ fontSize:13,color:'var(--text-3)' }}>비밀번호 변경 및 2단계 인증은 추후 지원 예정입니다.</p>
               </div>
-            </div>
-          </>
-        )}
-
-        {!isBuilder && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-            <div>
-              <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', marginBottom: 8, display: 'block' }}>회사명</label>
-              <input value={form.company_name||''} onChange={e => setForm(f => ({...f, company_name: e.target.value}))} placeholder="(주)예시컴퍼니" />
-            </div>
-            <div>
-              <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', marginBottom: 8, display: 'block' }}>업종</label>
-              <input value={form.industry||''} onChange={e => setForm(f => ({...f, industry: e.target.value}))} placeholder="IT, 교육, 커머스..." />
-            </div>
-          </div>
-        )}
-
-        <div>
-          <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', marginBottom: 8, display: 'block' }}>지역</label>
-          <input value={form.location||''} onChange={e => setForm(f => ({...f, location: e.target.value}))} placeholder="서울, 경기, 부산..." />
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', marginBottom: 8, display: 'block' }}>웹사이트</label>
-            <input value={form.website_url||''} onChange={e => setForm(f => ({...f, website_url: e.target.value}))} placeholder="https://" type="url" />
-          </div>
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', marginBottom: 8, display: 'block' }}>GitHub URL</label>
-            <input value={form.github_url||''} onChange={e => setForm(f => ({...f, github_url: e.target.value}))} placeholder="https://github.com/..." type="url" />
+            )}
+            {tab==='notif' && (
+              <div style={{ display:'flex',flexDirection:'column',gap:16 }}>
+                <h2 style={{ fontFamily:'var(--f-display)',fontSize:18,fontWeight:700,letterSpacing:'-.03em' }}>알림 설정</h2>
+                <p style={{ fontSize:13,color:'var(--text-3)' }}>알림 설정 기능은 추후 지원 예정입니다.</p>
+              </div>
+            )}
           </div>
         </div>
-
-        <button type="submit" className="btn btn-spark" disabled={loading} style={{ height: 44, justifyContent: 'center' }}>
-          {saved ? '✅ 저장됐습니다' : loading ? '저장 중...' : <><Save size={15}/> 변경사항 저장</>}
-        </button>
-      </form>
+      </div>
     </div>
   )
 }
