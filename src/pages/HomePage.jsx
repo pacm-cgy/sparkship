@@ -1,6 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { Zap, ArrowRight, Sparkles, Users, Search, Code2, Cpu, Globe, BookOpen, ShoppingBag, Gamepad2 } from 'lucide-react'
 import { useProjects } from '../hooks/useData'
+import { useQuery } from '@tanstack/react-query'
+import { supabase } from '../lib/supabase'
 import ProjectCard from '../components/ui/ProjectCard'
 
 const CATEGORIES = [
@@ -13,14 +15,22 @@ const CATEGORIES = [
   { key: 'game', label: '게임', icon: Gamepad2 },
 ]
 
-const STATS = [
-  { label: '청소년 빌더', value: '0', unit: '명', desc: '포트폴리오 등록' },
-  { label: '프로젝트', value: '0', unit: '개', desc: '아이디어 ~ 출시' },
-  { label: '스카우트 연락', value: '0', unit: '건', desc: '기업 발굴 의뢰' },
+const STAT_DEFS = [
+  { key: 'total_builders', label: '청소년 빌더', unit: '명', desc: '포트폴리오 등록' },
+  { key: 'total_projects', label: '프로젝트', unit: '개', desc: '아이디어 ~ 출시' },
+  { key: 'total_contacts', label: '스카우트 연락', unit: '건', desc: '기업 발굴 의뢰' },
 ]
 
 export default function HomePage() {
   const navigate = useNavigate()
+  const { data: statsData = [] } = useQuery({
+    queryKey: ['sparkship_stats'],
+    queryFn: async () => {
+      const { data } = await supabase.from('sparkship_stats').select('*')
+      return data || []
+    }
+  })
+  const statMap = Object.fromEntries(statsData.map(s => [s.key, s.value]))
   const { data: featuredProjects = [], isLoading } = useProjects({ featured: true, limit: 6 })
   const { data: latestProjects = [] } = useProjects({ limit: 8 })
 
@@ -66,10 +76,10 @@ export default function HomePage() {
 
           {/* 통계 */}
           <div style={{ display: 'flex', gap: 40, justifyContent: 'center', marginTop: 56, flexWrap: 'wrap' }}>
-            {STATS.map(s => (
+            {STAT_DEFS.map(s => (
               <div key={s.label} style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--spark)', letterSpacing: '-0.03em', fontFamily: 'var(--f-mono)' }}>
-                  {s.value}<span style={{ fontSize: 16, color: 'var(--text-3)' }}>{s.unit}</span>
+                  {(statMap[s.key] || 0).toLocaleString()}<span style={{ fontSize: 16, color: 'var(--text-3)' }}>{s.unit}</span>
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 2 }}>{s.label}</div>
                 <div style={{ fontSize: 11, color: 'var(--text-4)', fontFamily: 'var(--f-mono)' }}>{s.desc}</div>
